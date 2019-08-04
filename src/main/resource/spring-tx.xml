@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+                        http://www.springframework.org/schema/aop
+           				http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+           				http://www.springframework.org/schema/tx
+     	  				http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+
+    <!--(定义事务管理器)mybatis或者spring jdbc都使用DataSourceTransactionManager事务管理器-->
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <!--  以下为配置参与事务的类 这里我配置的是service下所有类都进行事务管理 -->
+    <!--声明式事务管理配置 start-->
+    <!--定义aop切面，使用AspectJ表达式定义切点-->
+    <aop:config>
+        <aop:pointcut id="allServiceMethod" expression="execution(* com.yang.service.*.*(..))"/>
+        <aop:advisor pointcut-ref="allServiceMethod" advice-ref="TxAdvice" />
+    </aop:config>
+    <!--定义事务增强，需要指定id和事务管理器-->
+    <tx:advice id="TxAdvice" transaction-manager="transactionManager">
+        <!--配置事务属性  指定传播行为 隔离级别采取默认值-->
+        <!--MySQL默认采用的REPEATABLE_READ隔离级别，Oracle默认采用的READ_COMMITTED隔离级别。-->
+        <tx:attributes>
+            <tx:method name="*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+        </tx:attributes>
+    </tx:advice>
+    <!--声明式事务管理配置 end-->
+    <!--注解驱动，对添加@Transactional注解的Bean织入事务管理，peoxy-target-class属性如果为true，使用CGLib-->
+    <!--<tx:annotation-driven transaction-manager="transactionManager"/>-->
+
+</beans>
